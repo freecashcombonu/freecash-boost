@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String?
+  username      String   @unique
+  displayName   String?
+  role          String   @default("user")
+  level         Int      @default(1)
+  xp             Int      @default(0)
+  streak        Int      @default(0)
+  kyc_erified   Boolean  @default(false)
+  referralCode  String   @unique
+  referredBy    String?
+  isBanned      Boolean  @default(false)
+  wallet        Wallet?
+  transactions  Transaction[]
+  userOffers    UserOffer[]
+  notifications Notification[]
+  createdAt     DateTime @default(now())
+}
+
+model Wallet {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  balance         Float    @default(0)
+  totalEarned     Float    @default(0)
+  pendingEarnings Float    @default(0)
+  referralEarnings Float    @default(0)
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  type        String
+  amount      Float
+  status      String   @default("pending")
+  method      String?
+  description String?
+  txHash      String?
+  createdAt   DateTime @default(now())
+}
+
+model Offer {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String
+  category    String
+  reward      Float
+  difficulty  String   @default("Easy")
+  timeEstimate String?
+  requirements String?
+  supportedOS String[]
+  countries   String[]
+  trackingUrl String?
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  isTrending  Boolean  @default(false)
+  completions Int      @default(0)
+  userOffers  UserOffer[]
+}
+
+model UserOffer {
+  id        String   @id @default(uuid())
+  userId    String
+  offerId   String
+  user      User     @relation(fields: [userId], references: [id])
+  offer     Offer    @relation(fields: [offerId], references: [id])
+  status    String   @default("started")
+  reward    Float
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
